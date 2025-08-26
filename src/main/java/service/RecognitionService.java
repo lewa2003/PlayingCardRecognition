@@ -19,8 +19,6 @@ public class RecognitionService {
 
     // Характеристические белые(не цветные) точки мастей
     private final Map<String, int[][]> suitWhitePointMap = new HashMap<>();
-    private final int cardWidth = 55;
-    private final int cardHeight = 86;
 
     // Координаты верхних левых углов карт
     private final int[][] cardsLeftTops = {{147, 586}, {219, 586}, {290, 586}, {361, 586}, {432, 586}};
@@ -32,7 +30,9 @@ public class RecognitionService {
     private final int[][] cardAngleCoordinates = {{2, 4}, {2, 82}, {51, 4}};
 
     // Максимальное значение модуля разности яркости двух цветов, для того, чтобы они считались одинаковыми
-    private final int luminanceThreshHold = 15;
+    private static final int LUMINANCE_THRESHOLD = 15;
+    private static final int CARD_WIDTH = 55;
+    private static final int CARD_HEIGHT = 86;
 
     public RecognitionService(){
         initRankMap();
@@ -49,7 +49,7 @@ public class RecognitionService {
         for (int[] lt : cardsLeftTops) {
             int x = lt[0];
             int y = lt[1];
-            var cardImg = table.getSubimage(x, y, cardWidth, cardHeight);
+            var cardImg = table.getSubimage(x, y, CARD_WIDTH, CARD_HEIGHT);
             if (isCard(cardImg)) {
                 String rank = detectCardRank(cardImg);
                 String suit = detectCardSuit(cardImg);
@@ -165,7 +165,7 @@ public class RecognitionService {
         var t = 0.2126 * template.getRed() + 0.7152 * template.getGreen() + 0.0722 * template.getBlue();
         var c = 0.2126 * check.getRed() + 0.7152 * check.getGreen() + 0.0722 * check.getBlue();
 
-        return Math.abs(t-c) < luminanceThreshHold;
+        return Math.abs(t-c) < LUMINANCE_THRESHOLD;
     }
 
     /**
