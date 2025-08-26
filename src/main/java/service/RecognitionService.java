@@ -23,13 +23,13 @@ public class RecognitionService {
     private final int cardHeight = 86;
 
     // Координаты верхних левых углов карт
-    private final int[][] leftTops = {{147, 586}, {219, 586}, {290, 586}, {361, 586}, {432, 586}};
+    private final int[][] cardsLeftTops = {{147, 586}, {219, 586}, {290, 586}, {361, 586}, {432, 586}};
 
     // Координаты центральной точки масти
     private final int[] suitCenter = {37, 64};
 
     // 3 угла карты, для проверки наличия карты
-    private final int[][] cardCoordinates = {{2, 4}, {2, 82}, {51, 4}};
+    private final int[][] cardAngleCoordinates = {{2, 4}, {2, 82}, {51, 4}};
 
     // Максимальное значение модуля разности яркости двух цветов, для того, чтобы они считались одинаковыми
     private final int luminanceTrashHold = 15;
@@ -46,7 +46,7 @@ public class RecognitionService {
      */
     public String doRecognition(BufferedImage table) throws IOException {
         StringBuilder cardsDetected = new StringBuilder();
-        for (int[] lt : leftTops) {
+        for (int[] lt : cardsLeftTops) {
             int x = lt[0];
             int y = lt[1];
             var cardImg = table.getSubimage(x, y, cardWidth, cardHeight);
@@ -108,21 +108,21 @@ public class RecognitionService {
     // Для каждого номинала проверяем, что его цветные характерестические точки не равны цвету фона карты, а
     // не цветные - равны
     private String detectCardRank(BufferedImage card) {
-        Color white = new Color(card.getRGB(cardCoordinates[0][0], cardCoordinates[0][1]));
-        for (var key : rankColoredPointMap.keySet()) {
-            var points = rankColoredPointMap.get(key);
+        Color cardBackGround = new Color(card.getRGB(cardAngleCoordinates[0][0], cardAngleCoordinates[0][1]));
+        for (var rank : rankColoredPointMap.keySet()) {
+            var points = rankColoredPointMap.get(rank);
             var match = true;
-            for (var point :  points) {
-                match = match && !colorSame(white, new Color(card.getRGB(point[0], point[1])));
+            for (var point : points) {
+                match = match && !colorSame(cardBackGround, new Color(card.getRGB(point[0], point[1])));
             }
-            var emptyPoints = rankWhitePointMap.get(key);
-            if (emptyPoints != null) {
-                for (var point : emptyPoints) {
-                    match = match && colorSame(white, new Color(card.getRGB(point[0], point[1])));
+            var whitePoints = rankWhitePointMap.get(rank);
+            if (whitePoints != null) {
+                for (var point : whitePoints) {
+                    match = match && colorSame(cardBackGround, new Color(card.getRGB(point[0], point[1])));
                 }
             }
             if (match) {
-                return key;
+                return rank;
             }
         }
         return "NO";
@@ -135,21 +135,21 @@ public class RecognitionService {
     // Для каждой масти проверяем, что её цветные характерестические точки равнцы цвету центральной точки масти, а
     // не цветные - не равны
     private String detectCardSuit(BufferedImage card) {
-        Color suitPosColor = new Color(card.getRGB(suitCenter[0], suitCenter[1]));
-        for (var key : suitColoredPointMap.keySet()) {
-            var points = suitColoredPointMap.get(key);
+        Color suitCenterColor = new Color(card.getRGB(suitCenter[0], suitCenter[1]));
+        for (var suit : suitColoredPointMap.keySet()) {
+            var points = suitColoredPointMap.get(suit);
             var match = true;
-            for (var point :  points) {
-                match = match && colorSame(suitPosColor, new Color(card.getRGB(point[0], point[1])));
+            for (var point : points) {
+                match = match && colorSame(suitCenterColor, new Color(card.getRGB(point[0], point[1])));
             }
-            var emptyPoints = suitWhitePointMap.get(key);
-            if (emptyPoints != null) {
-                for (var point : emptyPoints) {
-                    match = match && !colorSame(suitPosColor, new Color(card.getRGB(point[0], point[1])));
+            var whitePoints = suitWhitePointMap.get(suit);
+            if (whitePoints != null) {
+                for (var point : whitePoints) {
+                    match = match && !colorSame(suitCenterColor, new Color(card.getRGB(point[0], point[1])));
                 }
             }
             if (match) {
-                return key;
+                return suit;
             }
         }
         return "NO";
@@ -174,11 +174,11 @@ public class RecognitionService {
      */
     // Сравниваем три точки в разных углах карты на попарное равество цвета, а центральную точку масти - на отличие с одним из углов
     private boolean isCard(BufferedImage card) {
-        Color cardColor1 = new Color(card.getRGB(cardCoordinates[0][0], cardCoordinates[0][1]));
-        Color cardColor2 = new Color(card.getRGB(cardCoordinates[1][0], cardCoordinates[1][1]));
-        Color cardColor3 = new Color(card.getRGB(cardCoordinates[2][0], cardCoordinates[2][1]));
-        Color suitPosColor = new Color(card.getRGB(suitCenter[0], suitCenter[1]));
+        Color cardAngle1 = new Color(card.getRGB(cardAngleCoordinates[0][0], cardAngleCoordinates[0][1]));
+        Color cardAngle2 = new Color(card.getRGB(cardAngleCoordinates[1][0], cardAngleCoordinates[1][1]));
+        Color cardAngle3 = new Color(card.getRGB(cardAngleCoordinates[2][0], cardAngleCoordinates[2][1]));
+        Color suitCenterColor = new Color(card.getRGB(suitCenter[0], suitCenter[1]));
 
-        return colorSame(cardColor1, cardColor2) && colorSame(cardColor2, cardColor3) && !colorSame(cardColor1, suitPosColor);
+        return colorSame(cardAngle1, cardAngle2) && colorSame(cardAngle2, cardAngle3) && !colorSame(cardAngle1, suitCenterColor);
     }
 }
