@@ -4,8 +4,6 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
 
 public class PlayingCardRecognitionApplication {
 
@@ -31,18 +29,16 @@ public class PlayingCardRecognitionApplication {
 
         int count = 0;
         int fails = 0;
-        Set<String> cards = new HashSet<>();
         for (File file : files) {
             try {
                 BufferedImage img = ImageIO.read(file);
                 if (img != null) {
                     String realName = file.getName().replaceAll(".png", "");
                     count++;
-
-                    String cardsDetected = service.doRecognition(img, cards);
+                    String cardsDetected = service.doRecognition(img);
+                    System.out.println("Real name: " + realName + " my name: " + cardsDetected + " equals : " + realName.equals(cardsDetected));
                     if (!realName.equals(cardsDetected)) {
                         fails++;
-                        System.out.println("Real name: " + realName + " my name: " + cardsDetected + " equals : " + realName.equals(cardsDetected));
                     }
                 }
             } catch (IOException e) {
@@ -51,7 +47,5 @@ public class PlayingCardRecognitionApplication {
         }
         System.out.println("all: " + count);
         System.out.println("fails: " + fails);
-        System.out.println("Unic comb: " + cards.size());
-        System.out.println(cards);
     }
 }
