@@ -41,6 +41,7 @@ public class SingleFilePlayingCardRecognitionApplication {
         rankPointEmptyMap.put("J", new int[][]{{8, 9}, {6, 14}});
         rankPointEmptyMap.put("A", new int[][]{{12, 26}, {7, 7}, {17, 6}});
 
+        //String path = args[0];
         String path = "C:\\imgs_marked";
 
         File dir = new File(path);
@@ -56,17 +57,28 @@ public class SingleFilePlayingCardRecognitionApplication {
             System.out.println("В директории нет изображений.");
             return;
         }
+        int n = 0;
+        int fails = 0;
         for (File file : files) {
             try {
                 BufferedImage img = ImageIO.read(file);
                 if (img != null) {
+                    n++;
                     String cardsDetected = doRecognition(img, rankPointMap, rankPointEmptyMap);
-                    System.out.println(file.getName() + " - " + cardsDetected + " equals : " + cardsDetected.equals(file.getName().replaceAll(".png", "")));
+                    var equals = cardsDetected.equals(file.getName().replaceAll(".png", ""));
+                    //System.out.println(file.getName() + " - " + cardsDetected + " equals : " + equals);
+                    if (!equals) {
+                        System.out.println(file.getName() + " - " + cardsDetected + " equals : " + equals);
+                        fails++;
+                    }
                     }
             } catch (IOException e) {
                 System.err.println("Ошибка при чтении " + file.getName() + ": " + e.getMessage());
             }
         }
+        System.out.println("Ok: " + n);
+
+        System.out.println("Fails: " + fails);
     }
     public static String doRecognition(BufferedImage table, Map<String, int[][]> rankPointMap,
                                      Map<String, int[][]> rankPointEmptyMap) throws IOException {
@@ -77,7 +89,7 @@ public class SingleFilePlayingCardRecognitionApplication {
             var cardImg = table.getSubimage(x, y, cardWidth, cardHeight);
             Color color = new Color(cardImg.getRGB(1, 3));
             if (color.getBlue() > 100 && color.getGreen() > 100 && color.getRed() > 100) {
-                cardsDetected.append(detectCardRang(cardImg, rankPointMap, rankPointEmptyMap));
+                cardsDetected.append(detectCardRank(cardImg, rankPointMap, rankPointEmptyMap));
                 cardsDetected.append(detectCardSuit(cardImg));
             }
         }
@@ -97,7 +109,7 @@ public class SingleFilePlayingCardRecognitionApplication {
         return suitsMap.get(result);
     }
 
-    private static String detectCardRang(BufferedImage card, Map<String, int[][]> rankPointMap,
+    private static String detectCardRank(BufferedImage card, Map<String, int[][]> rankPointMap,
                                   Map<String, int[][]> rankPointEmptyMap) {
         for (var key : rankPointMap.keySet()) {
             var points = rankPointMap.get(key);
