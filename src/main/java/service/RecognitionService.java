@@ -145,7 +145,7 @@ public class RecognitionService {
         Color cardBackgroundColor = getColor(card, cardAngleCoordinates[0]);
 
         return rankColoredPointMap.keySet().stream()
-                .filter(rank -> matchesRankPattern(card, cardBackgroundColor, rank))
+                .filter(rank -> isRankPatternMatch(card, cardBackgroundColor, rank))
                 .findFirst()
                 .orElse("NO");
     }
@@ -157,7 +157,7 @@ public class RecognitionService {
      * @return card rank matches pattern
      */
     // Для номинала проверяем, что все его цветные характерестические точки не равны цвету фона карты, а не цветные - равны
-    private boolean matchesRankPattern(BufferedImage card, Color backgroundColor, String rank) {
+    private boolean isRankPatternMatch(BufferedImage card, Color backgroundColor, String rank) {
         int[][] coloredPoints = rankColoredPointMap.get(rank);
         int[][] whitePoints = rankWhitePointMap.getOrDefault(rank, new int[0][]);
 
@@ -175,7 +175,7 @@ public class RecognitionService {
     private String detectCardSuit(BufferedImage card) {
         Color suitCenterColor = getColor(card, suitCenter);
         return suitColoredPointMap.keySet().stream()
-                .filter(rank -> matchesSuitPattern(card, suitCenterColor, rank))
+                .filter(rank -> isSuitPatternMatch(card, suitCenterColor, rank))
                 .findFirst()
                 .orElse("NO");
     }
@@ -187,7 +187,7 @@ public class RecognitionService {
      * @return card suit matches pattern
      */
     // Для масти проверяем, что все её цветные характерестические точки равнцы цвету центральной точки масти, а не цветные - не равны
-    private boolean matchesSuitPattern(BufferedImage card, Color suitColor, String suit) {
+    private boolean isSuitPatternMatch(BufferedImage card, Color suitColor, String suit) {
         int[][] coloredPoints = suitColoredPointMap.get(suit);
         int[][] whitePoints = suitWhitePointMap.getOrDefault(suit, new int[0][]);
 
