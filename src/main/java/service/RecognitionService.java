@@ -103,7 +103,7 @@ public class RecognitionService {
 
     /**
      * @param card - card image
-     * @return card nominal, e.g. A
+     * @return card nominal, e.g. A. And "NO" if detection fails
      */
     // Для каждого номинала проверяем, что его цветные характерестические точки не равны цвету фона карты, а
     // не цветные - равны
@@ -130,7 +130,7 @@ public class RecognitionService {
 
     /**
      * @param card - card image
-     * @return card suit, e.g. h (for Hearts)
+     * @return card suit, e.g. h (for Hearts). And "NO" if detection fails
      */
     // Для каждой масти проверяем, что её цветные характерестические точки равнцы цвету центральной точки масти, а
     // не цветные - не равны
