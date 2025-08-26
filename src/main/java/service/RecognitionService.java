@@ -32,7 +32,7 @@ public class RecognitionService {
     private final int[][] cardAngleCoordinates = {{2, 4}, {2, 82}, {51, 4}};
 
     // Максимальное значение модуля разности яркости двух цветов, для того, чтобы они считались одинаковыми
-    private final int luminanceTrashHold = 15;
+    private final int luminanceThreshHold = 15;
 
     public RecognitionService(){
         initRankMap();
@@ -165,7 +165,7 @@ public class RecognitionService {
         var t = 0.2126 * template.getRed() + 0.7152 * template.getGreen() + 0.0722 * template.getBlue();
         var c = 0.2126 * check.getRed() + 0.7152 * check.getGreen() + 0.0722 * check.getBlue();
 
-        return Math.abs(t-c) < luminanceTrashHold;
+        return Math.abs(t-c) < luminanceThreshHold;
     }
 
     /**
