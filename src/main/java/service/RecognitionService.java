@@ -3,6 +3,7 @@ package service;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -113,12 +114,12 @@ public class RecognitionService {
             var points = rankColoredPointMap.get(rank);
             var match = true;
             for (var point : points) {
-                match = match && !colorSame(cardBackGround, new Color(card.getRGB(point[0], point[1])));
+                match = match && !isColorSimilar(cardBackGround, new Color(card.getRGB(point[0], point[1])));
             }
             var whitePoints = rankWhitePointMap.get(rank);
             if (whitePoints != null) {
                 for (var point : whitePoints) {
-                    match = match && colorSame(cardBackGround, new Color(card.getRGB(point[0], point[1])));
+                    match = match && isColorSimilar(cardBackGround, new Color(card.getRGB(point[0], point[1])));
                 }
             }
             if (match) {
@@ -140,12 +141,12 @@ public class RecognitionService {
             var points = suitColoredPointMap.get(suit);
             var match = true;
             for (var point : points) {
-                match = match && colorSame(suitCenterColor, new Color(card.getRGB(point[0], point[1])));
+                match = match && isColorSimilar(suitCenterColor, new Color(card.getRGB(point[0], point[1])));
             }
             var whitePoints = suitWhitePointMap.get(suit);
             if (whitePoints != null) {
                 for (var point : whitePoints) {
-                    match = match && !colorSame(suitCenterColor, new Color(card.getRGB(point[0], point[1])));
+                    match = match && !isColorSimilar(suitCenterColor, new Color(card.getRGB(point[0], point[1])));
                 }
             }
             if (match) {
@@ -161,7 +162,7 @@ public class RecognitionService {
      * @return true if diff in colors luminance < luminanceTrashHold
      */
     // Для двух цветов высчитываем их яркости по формуле Relative luminance и сравниаем их значения
-    private boolean colorSame(Color template, Color check) {
+    private boolean isColorSimilar(Color template, Color check) {
         var t = 0.2126 * template.getRed() + 0.7152 * template.getGreen() + 0.0722 * template.getBlue();
         var c = 0.2126 * check.getRed() + 0.7152 * check.getGreen() + 0.0722 * check.getBlue();
 
@@ -179,6 +180,6 @@ public class RecognitionService {
         Color cardAngle3 = new Color(card.getRGB(cardAngleCoordinates[2][0], cardAngleCoordinates[2][1]));
         Color suitCenterColor = new Color(card.getRGB(suitCenter[0], suitCenter[1]));
 
-        return colorSame(cardAngle1, cardAngle2) && colorSame(cardAngle2, cardAngle3) && !colorSame(cardAngle1, suitCenterColor);
+        return isColorSimilar(cardAngle1, cardAngle2) && isColorSimilar(cardAngle2, cardAngle3) && !isColorSimilar(cardAngle1, suitCenterColor);
     }
 }
