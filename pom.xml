@@ -40,7 +40,7 @@
                             <transformers>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>SingleFilePlayingCardRecognitionApplication</mainClass>
+                                    <mainClass>PlayingCardRecognitionApplication</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

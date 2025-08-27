@@ -1,5 +1,7 @@
 package service;
 
+import model.CardPosition;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -26,9 +28,6 @@ public class RecognitionService {
 
     // Координаты центральной точки масти
     private final int[] suitCenter = {37, 64};
-
-    // 3 угла карты, для проверки наличия карты
-    private final int[][] cardAngleCoordinates = {{2, 4}, {2, 82}, {51, 4}};
 
     // Максимальное значение модуля разности яркости двух цветов, для того, чтобы они считались одинаковыми
     private static final int LUMINANCE_THRESHOLD = 15;
@@ -104,36 +103,31 @@ public class RecognitionService {
      * @param card - card image
      * @return true if card is image of a playing card, false otherwise
      */
-    // Сравниваем три точки в разных углах карты на попарное равество цвета, а центральную точку масти - на отличие с одним из углов
+    // Сравниваем три точки - левый верхний, левый нижний и правый вехрний углы на попарное равество цвета, а центральную точку масти - на отличие с одним из углов
     private boolean isCard(BufferedImage card) {
-        Color cardAngle1 = getColor(card, cardAngleCoordinates[0]);
-        Color cardAngle2 = getColor(card, cardAngleCoordinates[1]);
-        Color cardAngle3 = getColor(card, cardAngleCoordinates[2]);
-        Color suitCenterColor = getColor(card, suitCenter);
+        Color leftTopAngle = getPointColor(card, CardPosition.LEFT_TOP.getCoordinates());
+        Color leftBottomAngle = getPointColor(card, CardPosition.LEFT_BOTTOM.getCoordinates());
+        Color rightTopAngle = getPointColor(card, CardPosition.RIGHT_TOP.getCoordinates());
+        Color suitCenterColor = getPointColor(card, suitCenter);
 
-        return isColorSimilar(cardAngle1, cardAngle2) && isColorSimilar(cardAngle2, cardAngle3) && !isColorSimilar(cardAngle1, suitCenterColor);
+        return isColorSimilar(leftTopAngle, leftBottomAngle) && isColorSimilar(leftBottomAngle, rightTopAngle)
+                && !isColorSimilar(leftTopAngle, suitCenterColor);
     }
 
-    /**
-     * @param image - image to take color from point
-     * @param point - point coordinates to take color
-     * @return Color on point for image
-     */
-    private Color getColor(BufferedImage image, int[] point) {
+    private Color getPointColor(BufferedImage image, int[] point) {
         return new Color(image.getRGB(point[0], point[1]));
     }
 
-    /**
-     * @param template - color to compare with
-     * @param check - color for comparison
-     * @return true if diff in colors luminance < luminanceTrashHold
-     */
     // Для двух цветов высчитываем их яркости по формуле Relative luminance и сравниаем их значения
-    private boolean isColorSimilar(Color template, Color check) {
-        var t = 0.2126 * template.getRed() + 0.7152 * template.getGreen() + 0.0722 * template.getBlue();
-        var c = 0.2126 * check.getRed() + 0.7152 * check.getGreen() + 0.0722 * check.getBlue();
+    private boolean isColorSimilar(Color first, Color second) {
+        var firstLuminance = calculateRelativeLuminance(first);
+        var secondLuminance = calculateRelativeLuminance(second);
 
-        return Math.abs(t-c) < LUMINANCE_THRESHOLD;
+        return Math.abs(firstLuminance-secondLuminance) < LUMINANCE_THRESHOLD;
+    }
+
+    private double calculateRelativeLuminance(Color color) {
+        return 0.2126 * color.getRed() + 0.7152 * color.getGreen() + 0.0722 * color.getBlue();
     }
 
     /**
@@ -142,7 +136,7 @@ public class RecognitionService {
      */
     // Для каждого номинала будем проверять его характеристические точки, пока не обнаружим полное совпадение
     private String detectCardRank(BufferedImage card) {
-        Color cardBackgroundColor = getColor(card, cardAngleCoordinates[0]);
+        Color cardBackgroundColor = getPointColor(card, CardPosition.LEFT_TOP.getCoordinates());
 
         return rankColoredPointMap.keySet().stream()
                 .filter(rank -> isRankPatternMatch(card, cardBackgroundColor, rank))
@@ -156,24 +150,24 @@ public class RecognitionService {
      * @param rank - rank to check characteristic points
      * @return card rank matches pattern
      */
-    // Для номинала проверяем, что все его цветные характерестические точки не равны цвету фона карты, а не цветные - равны
+    // Для номинала проверяем, что все его цветные характеристические точки не равны цвету фона карты, а не цветные - равны
     private boolean isRankPatternMatch(BufferedImage card, Color backgroundColor, String rank) {
         int[][] coloredPoints = rankColoredPointMap.get(rank);
         int[][] whitePoints = rankWhitePointMap.getOrDefault(rank, new int[0][]);
 
         return Arrays.stream(coloredPoints)
-                .noneMatch(point -> isColorSimilar(backgroundColor, getColor(card, point)))
+                .noneMatch(point -> isColorSimilar(backgroundColor, getPointColor(card, point)))
                 && Arrays.stream(whitePoints)
-                .allMatch(point -> isColorSimilar(backgroundColor, getColor(card, point)));
+                .allMatch(point -> isColorSimilar(backgroundColor, getPointColor(card, point)));
     }
 
     /**
      * @param card - card image
      * @return card suit, e.g. h (for Hearts). And "NO" if detection fails
      */
-    // Для каждой масти будем проверять её характерестические точки, пока не обнаружим полное совпадение
+    // Для каждой масти будем проверять её характеристические точки, пока не обнаружим полное совпадение
     private String detectCardSuit(BufferedImage card) {
-        Color suitCenterColor = getColor(card, suitCenter);
+        Color suitCenterColor = getPointColor(card, suitCenter);
         return suitColoredPointMap.keySet().stream()
                 .filter(rank -> isSuitPatternMatch(card, suitCenterColor, rank))
                 .findFirst()
@@ -186,14 +180,14 @@ public class RecognitionService {
      * @param suit - suit to check characteristic points
      * @return card suit matches pattern
      */
-    // Для масти проверяем, что все её цветные характерестические точки равнцы цвету центральной точки масти, а не цветные - не равны
+    // Для масти проверяем, что все её цветные характеристические точки равнцы цвету центральной точки масти, а не цветные - не равны
     private boolean isSuitPatternMatch(BufferedImage card, Color suitColor, String suit) {
         int[][] coloredPoints = suitColoredPointMap.get(suit);
         int[][] whitePoints = suitWhitePointMap.getOrDefault(suit, new int[0][]);
 
         return Arrays.stream(coloredPoints)
-                .allMatch(point -> isColorSimilar(suitColor, getColor(card, point)))
+                .allMatch(point -> isColorSimilar(suitColor, getPointColor(card, point)))
                 && Arrays.stream(whitePoints)
-                .noneMatch(point -> isColorSimilar(suitColor, getColor(card, point)));
+                .noneMatch(point -> isColorSimilar(suitColor, getPointColor(card, point)));
     }
 }
